@@ -1,0 +1,4 @@
+##### Analysis specifications (read as CSV) ####,,,,
+# Set end time to -1 to not trim,,,,
+file_spec,units_to_mm,start_t,end_t,"factor_regex	"
+BiowareAxAyFxFyFz,1000,5,-1,^(P[[:digit:]]{6}_)
