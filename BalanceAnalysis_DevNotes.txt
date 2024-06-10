@@ -1,0 +1,45 @@
+Balance analysis script version notes
+=====================================
+
+Still required
+--------------
+
+* [DEFERRED INDEFINITELY] Identification of periods of double contact in single-leg stances
+	- determine how to handle these gaps
+* Interpolation of gaps left by skipped frames (Only required for Tekscan data)
+	- analysis of errors from skipped frames accounting for number of frames dropped and size of gaps
+
+As of version 1.1
+* The following parameters calculated
+	- Total path length
+	- CoFPL velocity
+	- AP CoF amplitude
+	- ML CoF amplitude
+	- AP CoF velocity
+	- ML CoF velocity
+	- CoF 95% ellipse area
+* Read sample time from header of data file
+* Limit data used in analyses to start time to end time
+* Implemented changes to reading settings
+* Added scaling factor to convert units to mm (if required)
+* Sample duration calculation modified so that it is not sensitive to skipped frames at the start/ end of trials
+* Write results to CSV file
+* Writing descriptive stats to file added
+* Extracting trial category from file names using Regex
+* Added calculation of no of frames
+
+Version 1.2
+* Modification to allow script to run on Mac/ Linux
+	- dropped use of psych library and replaced with e1071- Stats calculated individually
+	- Added tcltk::tk_choose.files option when platform$OS.type == Unix (Should return 'unix for Unix, Linux, and Mac OSX)
+		- Does not allow the default index of file type to be set so choose.files option retained for Windows machines
+* Added analysis of frame skipping for Tekscan files
+* Kurtosis/ skew type added to analysis file settings
+
+Version 1.3
+* Correction to x/y path length calcuations. The absolute values of the differences between each frames are taken before summing
+* Modification of all speed calculations so columns for time derivatives are just appended later for all path lengths (x, y, xy)
+
+Version 1.4
+* Grouped statistics now included 
+

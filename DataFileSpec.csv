@@ -1,4 +1,4 @@
-##### File specifications (read by line) ####,,,,,,,,
+##### File specifications (read as CSV) ####
 # Source, default file type, deliminator, max num of rows (-1), No rows before data, No of rows before sample rate, column of sample rate value,"Columns 1- 4: (Name, index, type)",
 source,file_type,delim,maxn,skip,sr_skp,sr_colm,colm_type,colm_names
 FootscanSAM,csv,",",1000,9,5,2,d_dd,"Time,NA,Ax,Ay"

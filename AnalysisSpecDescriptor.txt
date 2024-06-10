@@ -1,0 +1,21 @@
+Analysis file descriptor
+========================
+
+The name of the file is hard coded in the script and must not be changed
+The file is read as comma separated values. Lines starting with '#' are comments and will be ignored
+Line 3 sets the name of the parameters. These names are used in the script so must not be changed
+Line 4: sets the values of the parameters. 
+
+Parameters
+----------
+file_spec: The file specification to be used. Valid options are those set in the 'DataFileSpec.csv' file
+units_multiply: Multiplier used to convert between the units in the data files and those in the results. For example, if the data files are in metres, setting this to 1000 would produce results in mms.
+start_t: The time within the data files to start the analysis from
+end_t: The time within the data files to end the analysis from. Set to -1 to not trim, i.e. analyse to end of the file
+factor_regex: A regex expression used to extract trial categories from filenames, e.g. for filenames of the syntax 'P000000_Cat1', a Regex set to 'P[[:digit:]]{6}_' will return 'Cat1'. Any spaces within the file names will be replaced by underscores prior to applying the Regex and so these should be used in the expresssion.
+sk_type: Skew and Kurtosis types of calculation to use. 
+	type = 1 is the typical definition used in Stata and in many older textbooks.
+        type = 2 is used in SAS and SPSS.
+        type = 3 is used in MINITAB and BMDP. 
+        type 2 requires a minimum of 3 observations for skew and 4 for kurtosis. If less observations than this are present for any parameter then NA will be returned.
+fg_max: The maximum size of frame gaps to allow for in the skipped from frequency analysis. This should be set to 0 where this is not required. The sum of gaps greater than the value set is return anyway as well as the maximum size of gap exceeding the fg_max value so, if gaps larger than the set value are found, this will still be apparent in the analysis.
