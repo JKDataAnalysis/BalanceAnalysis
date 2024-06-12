@@ -1,2 +1,2 @@
-This code runs analysis in human balance data providing various parameters relating to the centre of force movement. It will work with text files exported with data from the Kistler Bioware software or the Tekscan Fscan research software (SAM). It would also be possible to use other files that also contain:
-Time and x/y locations of centre of force by creating custom settings in the DataFileSpec file. The text files must also contain teh sample rate in the header.
+This code runs analysis on human balance data providing various parameters relating to the centre of force movement. It will work with text files exported with data from the Kistler Bioware software or the Tekscan Fscan research software (SAM). It would also be possible to use other files that also contain:
+Time and x/y locations of centre of force by creating custom settings in the DataFileSpec file. The text files must also contain the sample rate in the header.
