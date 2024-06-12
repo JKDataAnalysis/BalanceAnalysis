@@ -19,3 +19,4 @@ sk_type: Skew and Kurtosis types of calculation to use.
         type = 3 is used in MINITAB and BMDP. 
         type 2 requires a minimum of 3 observations for skew and 4 for kurtosis. If less observations than this are present for any parameter then NA will be returned.
 fg_max: The maximum size of frame gaps to allow for in the skipped from frequency analysis. This should be set to 0 where this is not required. The sum of gaps greater than the value set is return anyway as well as the maximum size of gap exceeding the fg_max value so, if gaps larger than the set value are found, this will still be apparent in the analysis.
+unfill/ interp: Whether to analyse unfilled, interpolated (or both) data. Interpolation should only be relevant where there are gaps in the data
