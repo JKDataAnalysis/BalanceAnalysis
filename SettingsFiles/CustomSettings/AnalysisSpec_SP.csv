@@ -1,0 +1,4 @@
+##### Analysis specifications (read as CSV) ####
+# Set end time to -1 to not trim
+file_spec,units_multiply,start_t,end_t,factor_regex,sk_type,fg_max,unfill,interp
+FootscanSAM,1,0,10,^\w{5},3,10,T,T
