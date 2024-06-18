@@ -1,10 +1,18 @@
-# DEV NOTES ===================================================================
-# FOR NEXT VERSION ------------------------------------------------------------
+# DEV NOTES +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+# Changes since last version ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+# * If either of the default settings files cannot be read from default folder
+#     ([script path]\SettingsFiles) the user will now be asked to identify a valid file.
+# Required for this version +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+# [BUG] If interpolation only is to be used and there are data sets with no
+#     missing values then Interp will be returned as FALSE and grouped statistics will
+#     be run on grouped data. Change this to group by interpolations and unfilled ONLY
+#     if both options are set to TRUE. Update the readme file after correcting this.
+# FOR NEXT VERSION ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 # * Add initialisation routines to start
 #   - Clear environment so there aren't clashes with things already in the 
 #       Global Environment
 # * Look at using time gaps rather than frame gaps- see code in Interpolation.R
-# +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+# ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 library(readr) # Used by read_csv
 library(svDialogs) # Used for basic dialogues
@@ -12,7 +20,7 @@ library(magrittr) # Used for pipes and associated aliases (e.g. divide_by)
 library(dplyr) # Used for mutate
 
 # RUN THE SCRIPT ######
-run_it <- function(dev = FALSE, miss = FALSE){
+run_it <- function(data_out = FALSE, miss = FALSE){
   settings <- get_setns() # Get settings
 
     ### Get files to work on ---------
@@ -157,7 +165,7 @@ run_it <- function(dev = FALSE, miss = FALSE){
         }
         
         ### Output CoF data as df for testing --------
-        if (dev) {assign(clean_file_name, CoF_data, envir = .GlobalEnv) }
+        if (data_out) {assign(clean_file_name, CoF_data, envir = .GlobalEnv) }
         # ^^^^ DEBUGGING ONLY ^^^^^^^^^^^
         
         }
@@ -187,7 +195,9 @@ run_it <- function(dev = FALSE, miss = FALSE){
       
       ### Do stats unfilled/ int data ---------------
         sts_all <- res_df[c(skpcol, -3)] %>% # Exclude unused grouping column {trial}
-          group_by(Interp) %>%
+      # browser()
+          # if (settings$interp & settings$unfill){group_by(Interp) } %>% 
+          group_by(Interp) %>% 
           group_modify(~ calc_descript_stats(.x, sk_type = settings$sk_type) )
       # Set trial column to df to separate stats from those grouped by trial
       sts_all <- cbind(trial = "All", sts_all) %>%
@@ -242,12 +252,12 @@ get_setns <- function(){
   ### Check settings files exist and can be read -----
 
   # Check analysis settings file found and readable
-  anal_setn_file <- check_setn_file('AnalysisSpec.csv', 'analysis specification')
+  anal_setn_file <- check_setn_file('AnalysisSpec.csv', 'Analysis specification')
   if (!is.null(anal_setn_file) ) {
     message('Analysis settings file found and readable. Check data file specifications file...')
 
     # Check data file specifications file found and readable
-    data_file_spec_file <- check_setn_file('DataFileSpec.csv', 'data file specification')
+    data_file_spec_file <- check_setn_file('DataFileSpec.csv', 'Data file specification')
     if (!is.null(data_file_spec_file) ) {
       message('Data file specifications file found and readable. Load analysis settings...')
 
@@ -303,20 +313,26 @@ get_setns <- function(){
 ## Check settings file exists in script path =====
 check_setn_file <- function(setnfile, file_msg){
   ### Create path to settings file -------
-  settingsfile <- paste( # default settings file name (no separator)
-    dirname(rstudioapi::getSourceEditorContext()$path),
-    '/',
+  setnfile <- paste( # default settings file name (no separator)
+    dirname(rstudioapi::getSourceEditorContext()$path), # path to script
+    '/SettingsFiles/', # within SettingsFiles folder
     setnfile,
     sep=''
-  )
-  if (file.access(settingsfile, mode = 4) == 0) { # If can read from file
-    return(settingsfile)
-  } else {
-    message('Unable to read ', file_msg)
-    dlg_message(paste('Unable to read ', file_msg), 'ok')
-    return()
+  ) 
+  file_ok <- FALSE
+  while (!file_ok) {
+    if(file.access(setnfile, mode = 4) == 0) {
+      file_ok <- TRUE
+      return(setnfile)
+    } else {
+      message("Warning!:", file_msg, " file not found or unreadable")
+      dlg_message(
+          paste(file_msg, " file not found or unreadable, please choose valid settings file."),
+          type = "ok"
+        )
+        setnfile <- file.choose()
+    }
   }
-
 }
 
 ## Read In csv Settings File ================
@@ -580,7 +596,7 @@ calc_descript_stats <- function(x, trm = 0.1, sk_type = 3) {
 
 ## Plot Interpolates Missing Values =====================
 # This function is never called but is retained to allow the plotting of unfilled/
-#   interpolated if required by calling run_it with dev = T and then passing 
+#   interpolated if required by calling run_it with data_out = T and then passing 
 #   the resulting df to this function
 plot_interpolate <- function(x){
   library(ggplot2)
