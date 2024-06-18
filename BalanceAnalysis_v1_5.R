@@ -1,12 +1,6 @@
 # DEV NOTES +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 # Changes since last version ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-# * If either of the default settings files cannot be read from default folder
-#     ([script path]\SettingsFiles) the user will now be asked to identify a valid file.
 # Required for this version +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-# [BUG] If interpolation only is to be used and there are data sets with no
-#     missing values then Interp will be returned as FALSE and grouped statistics will
-#     be run on grouped data. Change this to group by interpolations and unfilled ONLY
-#     if both options are set to TRUE. Update the readme file after correcting this.
 # FOR NEXT VERSION ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 # * Add initialisation routines to start
 #   - Clear environment so there aren't clashes with things already in the 
@@ -195,9 +189,10 @@ run_it <- function(data_out = FALSE, miss = FALSE){
       
       ### Do stats unfilled/ int data ---------------
         sts_all <- res_df[c(skpcol, -3)] %>% # Exclude unused grouping column {trial}
-      # browser()
-          # if (settings$interp & settings$unfill){group_by(Interp) } %>% 
-          group_by(Interp) %>% 
+          # If doing both interpolated and not, group by Interp. Need the conditional to stop 
+          # stats being returned grouped where only interpolated == T but some data sets have no
+          # missing values
+          {if(settings$interp & settings$unfill) group_by(., Interp) else .} %>%
           group_modify(~ calc_descript_stats(.x, sk_type = settings$sk_type) )
       # Set trial column to df to separate stats from those grouped by trial
       sts_all <- cbind(trial = "All", sts_all) %>%
@@ -206,7 +201,7 @@ run_it <- function(data_out = FALSE, miss = FALSE){
       ## Do Grouped Stats ================================
       if(length(unique(res_df$trial) ) > 1) { # If there are more than 1 trial categories
         sts_grp <- res_df[c(skpcol)] %>% # Exclude unused grouping column {interp}
-          group_by(Interp) %>%
+          {if(settings$interp & settings$unfill) group_by(., Interp) else .} %>%
           group_by(trial, .add = TRUE) %>%
           group_modify(~ calc_descript_stats(.x,sk_type = settings$sk_type) )
       } else {
