@@ -1,0 +1,21 @@
+Analysis file descriptor
+========================
+
+The script is written to give a good deal of flexibility in the files that can be imported. Most deliminated text files can be read by creating a row of parameters that matches the files specification. 
+
+The name of the file is hard coded in the script and must not be changed.
+The file is read as comma separated values. Lines starting with '#' are comments and will be ignored
+Line 2 sets the name of the parameters. These names are used in the script so must not be changed
+Line 3...: sets the values of the parameters for various file types
+
+Parameters
+----------
+source: Idetifier for the file type. Which one to be used is specified in the analysispec.csv file
+file_type: The default file type to use (csv, txt, tsv). These will be the selected type returned by the file type filter when data files are open.
+delim: The deliminator used in the data file, e.g. "," or \t
+maxn: The maximum number of rows of data to read in. Set to -1 to read whole file
+skip: The number of rows in the header before the first line of data
+sr_skp: The number of rows in the header before the line containing sample rate
+sr_colm: The column in the line containing sample rate that it is to be read from. The line is read as a table so white space is assumed as the deliminator
+colm_type: List of column types. Likely types are: 'd': double (real numbers), 'i': integers, 'c': character (strings), '_': skip column (column will not be read)
+colm_names: List of column names. These must include "Time", "Ax" and "Ay" as all of these are used in the core analyses. The names are used in the script so must be in exactly that syntax. They must be in the order of the columns in the data file. "NA" should be included for columns not to be read in (denoted by underscore in colm_types).The entire group must be enclosed in double quotes with commas separating them.

@@ -1,0 +1,21 @@
+Procedures for running analysis of errors resulting from missing data frames
+
+1) Calculate mean and SD of missing values to build model from
+	- Run the Balance Analysis script as 'run_it(miss = TRUE)'. This will return the mean and SD of the missing times in the files analysed. 
+	- It will also create a global variable called 'missing_times' which can be used for further analysis
+	- For this to be representative, this should be all available files.
+ 
+2) Generate model data
+	- Run the Frame Skipping Model Data Generator script as 'generate_model_data(gap_mean = x, gap_sd = x, gap_max = x)' replacing x with the relevant values from step 1. 'gap_max' will be the highest frame gap for in the results file in step 1 that is present in one or more files.
+	- It is not necessary to select only files with no skipped frames, these will be ignored by the script.
+	
+3) Calculate parameters on model data
+	- In the Analysis Specification file, change the value of;
+		* 'file_spec' to 'FootscanError'
+		* 'factor_regex' to '^\w{8}'
+		* Ensure that both 'unfill' and 'interp' are set to 'T'.
+	- Run the Balance Analysis script again as 'model_data <- run_it()'. This will return the results do a new data frame called 'model data'
+	- Use the files generated in step 2 ('miss' does not need to be set to TRUE). 
+	
+4) Calculate errors by number of frames skipped for each variable
+	- Run the Frame Skipping Model Data Generator script again, this time calling function 'calc_frame_skip_error(model_data)'
