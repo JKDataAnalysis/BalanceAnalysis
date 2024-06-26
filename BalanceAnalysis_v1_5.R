@@ -1,6 +1,10 @@
 # DEV NOTES +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 # Changes since last version ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 # Required for this version +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+# [BUG] When files are renamed, they disappear!
+# [BUG] Appears to be seeing file names as non-matching even when they are
+# * Move rename code to a separate function
+# * Update version notes to reflect the addition of this action
 # FOR NEXT VERSION ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 # * Add initialisation routines to start
 #   - Clear environment so there aren't clashes with things already in the 
@@ -14,7 +18,7 @@ library(magrittr) # Used for pipes and associated aliases (e.g. divide_by)
 library(dplyr) # Used for mutate
 
 # RUN THE SCRIPT ######
-run_it <- function(data_out = FALSE, miss = FALSE){
+run_it <- function(data_out = FALSE, miss = FALSE, check_flname = FALSE, chkskp = 4, chkcol = 2){
   settings <- get_setns() # Get settings
 
     ### Get files to work on ---------
@@ -33,11 +37,17 @@ run_it <- function(data_out = FALSE, miss = FALSE){
     missn_l <- list() # Create empty list to append lists of missing times to
 
     ### Iterate through file list ---------
-    message('Starting analyses...')
+    print('Starting analyses...')
     res_df <- data.frame() # Create empty data frame to write results to
     
     for (file_i in CoF_data_files) { # for each file in list
-
+      
+      # Check file names for names not matching file name in header ============
+      # Using nested If statements so not wasting time reading from files if not Tekscan files (i.e.
+      # not likely to have stuffed up file names)
+      if (check_flname == TRUE) {
+        file_i <- check_file_name(file_i, chkskp, chkcol)
+      } 
       ### Clean file name for labelling -----
       # Remove file type
       clean_file_name <- sub("([^.]+)\\.[[:alnum:]]+$", "\\1", basename(file_i) )
@@ -47,7 +57,7 @@ run_it <- function(data_out = FALSE, miss = FALSE){
 
       ### Read data file ----------------
       if (file.access(file_i, mode = 4) == 0) { # If can read from file
-        message('Analysing ', file_i, '...')
+        print(paste('Analysing ', file_i, '...') )
         CoF_data <- read_txt_data(
           file_i,
           delm = settings$delim,
@@ -65,7 +75,7 @@ run_it <- function(data_out = FALSE, miss = FALSE){
             )
         } else { # Read file OK- carry on
           ### Read sample rate -----------------
-          sr <- read_sample_rate(file_i, settings$sr_skp, settings$sr_colm) # Read in sample rate
+          sr <- as.numeric(read_header_info(file_i, settings$sr_skp, settings$sr_colm) )
           
           ### Trim df to start/ end times -----------
           if (settings$end_t < 0){ # If set to -ve, don't trim end
@@ -208,7 +218,7 @@ run_it <- function(data_out = FALSE, miss = FALSE){
         sts_grp <- data.frame() # Empty df so there's something not to write
       }
         
-    }
+    
     write_to_file( # Write descriptive stats to file
       rbind( # Add header to df
         "",
@@ -221,7 +231,7 @@ run_it <- function(data_out = FALSE, miss = FALSE){
       dflt = "BalanceAnalysis_DescriptStats.csv",
       ttl = "Save descriptive statistics as"
       )
-    
+    }
     # Output list of missing times collected for basing modelling of the impact of dropped frames
     if (miss) {
       if (settings$interp) {
@@ -230,7 +240,7 @@ run_it <- function(data_out = FALSE, miss = FALSE){
           "\nDetails of missing times\n\tMean = ", 
           mean(as.numeric(missn_l) ), "\n\tSD = ", 
           sd(as.numeric(missn_l) )
-          )
+        )
       } else {
         print("No missing times to export. These are only calculated if interp = T")
       }
@@ -249,12 +259,12 @@ get_setns <- function(){
   # Check analysis settings file found and readable
   anal_setn_file <- check_setn_file('AnalysisSpec.csv', 'Analysis specification')
   if (!is.null(anal_setn_file) ) {
-    message('Analysis settings file found and readable. Check data file specifications file...')
+    print('Analysis settings file found and readable. Check data file specifications file...')
 
     # Check data file specifications file found and readable
     data_file_spec_file <- check_setn_file('DataFileSpec.csv', 'Data file specification')
     if (!is.null(data_file_spec_file) ) {
-      message('Data file specifications file found and readable. Load analysis settings...')
+      print('Data file specifications file found and readable. Load analysis settings...')
 
       ### Read in analysis settings --------
       settings <- read_csv_settings(
@@ -266,7 +276,7 @@ get_setns <- function(){
       )
       # If returned analysis settings
       if (!is.null(settings) ) {
-        message('Analysis settings loaded. Load data file specifications...')
+        print('Analysis settings loaded. Load data file specifications...')
 
         ### Read in data file specifications --------
         data_f_specs <- read_csv_settings(
@@ -280,7 +290,7 @@ get_setns <- function(){
         if (!is.null(data_f_specs) ) {
           # Replace negative maxn values (flagged for all rows) with Inf
           data_f_specs['maxn'][data_f_specs['maxn'] < 0] <- Inf
-          message('Finished loading settings\nGet data files...')
+          print('Finished loading settings -> Get data files...')
           tryCatch(
             {
               return(
@@ -354,8 +364,8 @@ read_csv_settings <- function(setn_file, skp, n = Inf, c_type, file_msg, ...){
   )
 }
 
-## Read Sample Rate From Data File ==========
-read_sample_rate <- function(fl, skp, colm, ...) {
+## Read Information from file header ==========
+read_header_info <- function(fl, skp, colm, ...) {
   t1 <- read_table(
     fl,
     skip = skp,
@@ -364,7 +374,7 @@ read_sample_rate <- function(fl, skp, colm, ...) {
     show_col_types = FALSE,
     ...
   )
-  return(as.numeric(t1[colm] ) ) # As numeric or returns as subset
+  return(t1[[colm]])
 }
 
 # LOAD DATA FILES ####
@@ -455,6 +465,33 @@ interpolate <- function(x, # Data frame to work on
   x <- x %>% mutate(Ax_int = zoo::na.approx(Ax) ) %>%
     mutate(Ay_int = zoo::na.approx(Ay) )
 }
+## Check file names match name in header =======================================
+check_file_name <- function(source_file, skp = 4, col = 2){
+  headname <- read_header_info(source_file, skp, col) # Read file name from file header
+  headname <- sub(tools::file_ext(headname), "", headname) # Strip off file extension
+  source_filename <- sub(tools::file_ext(basename(source_file)), "", basename(source_file)) 
+  if (headname ==  source_filename){
+    return(source_file) # File name already matches information in header
+  } else {
+    if (dlg_message(paste(
+      "File name in file header does not match the actual filename\n\n\t* Name in header:",
+      headname,
+      "\n\t* File name: ",
+      source_filename,
+      "\n\nChange file name to match header information?"
+    ),
+    'yesno')$res == 'yes') {
+      newflname <- file.path(dirname(source_file), paste(headname, tools::file_ext(source_file), sep = "" ) ) 
+      if (file.rename(source_file, newflname) ) {
+        message(basename(source_file), " renamed as ", basename(newflname) )
+        return(newflname)
+      } else {
+        message("Unable to rename ", basename(file_i) )
+        return(source_file)
+      }
+    }
+  }
+}
 
 # ANALYSIS #####################################
 
@@ -536,19 +573,16 @@ frames_skip_anal <- function(times, sample_rate, skip_max = 10){
   # Append count of values exceeding max number processed
   # If statement used to avoid warnings and returning -Inf for max when skip_max > worst skip length, i.e.
   # would return 0 length matrix
-  if (max(as.integer(names(frame_skips) ) ) > skip_max){ # If worst skip length is > max size of recording matrix
-    frame_skips_m <- cbind(
-    frame_skips_m,
+  # browser()
+  frame_skips_m <- cbind(
+    frame_skips_m[1:skip_max],
     Sum_Exceed = sum(frame_skips[-1:-skip_max] ),
-    Max_Exceed = max(frame_skips[-1:-skip_max] ) 
+    Max_Exceed = if (max(as.integer(names(frame_skips) ) ) > skip_max){  # If worst skip length is > max size of recording matrix
+      max(as.integer(names(frame_skips)))
+    } else {
+      0
+    }
   )
-  } else {
-    frame_skips_m <- cbind(
-    frame_skips_m,
-    Sum_Exceed = 0,
-    Max_Exceed = 0
-    )
-  }
 }
 
 # RUN STATS #############################################################
@@ -560,7 +594,7 @@ std_error <- function(x){
 ## Descriptive stats Calculation ==============
 calc_descript_stats <- function(x, trm = 0.1, sk_type = 3) {
   data.frame(
-    n  =  apply(x, 2, length),
+    n  =  apply(x, 2, length),# That should probably be n not length
     Mean =  apply(x, 2, mean, na.rm = TRUE),
     SD = apply(x, 2, sd, na.rm = TRUE),
     Median = apply(x, 2, median, na.rm = TRUE),
@@ -584,7 +618,7 @@ calc_descript_stats <- function(x, trm = 0.1, sk_type = 3) {
         NA
       }
   ) %>%
-    t() %>%
+    t %>%
     as.data.frame() %>% #Transpose converts to matrix array but must be df for mutate functions
     cbind(param = rownames(.), .) # Add parameter names as a column
 }
@@ -625,7 +659,7 @@ write_to_file <- function(df, dflt = "*.csv", ttl = "Save file as", ...) {
             ...
           )
           saved <- TRUE
-          message("Output saved to: ", export_file)
+          print(paste("Output saved to: ", export_file) )
         }, error = function(e) {
           message('Error in saving ', export_file)
           print(e)

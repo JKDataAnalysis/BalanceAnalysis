@@ -1,12 +1,17 @@
 Procedures for running analysis of errors resulting from missing data frames
 
 1) Calculate mean and SD of missing values to build model from
-	- Run the Balance Analysis script as 'run_it(miss = TRUE)'. This will return the mean and SD of the missing times in the files analysed. 
+	- Run the Balance Analysis script as 'run_it(miss = TRUE)'. This will return the mean and SD of the missing times in the files analysed. These will appear above the data frame of results in the console so it may be necessary to scroll back up to view them.
 	- It will also create a global variable called 'missing_times' which can be used for further analysis
-	- For this to be representative, this should be all available files.
+	- For this to be representative, this should be ALL available files.
  
 2) Generate model data
-	- Run the Frame Skipping Model Data Generator script as 'generate_model_data(gap_mean = x, gap_sd = x, gap_max = x)' replacing x with the relevant values from step 1. 'gap_max' will be the highest frame gap for in the results file in step 1 that is present in one or more files.
+	- Run the Frame Skipping Error Modelling script as 'generate_model_data(gap_mean = x, gap_sd = x, gap_max = x)' replacing x with the relevant values from step 1. 'gap_max' will be the highest number of frames missing from one or more files used in step 1. This is calculated as;
+	Set number of frames - lowest number of frames recorded ('No_frames' column)
+	
+	where;
+		Set number of frames = set sample rate * set sample duration
+		
 	- It is not necessary to select only files with no skipped frames, these will be ignored by the script.
 	
 3) Calculate parameters on model data
@@ -18,4 +23,7 @@ Procedures for running analysis of errors resulting from missing data frames
 	- Use the files generated in step 2 ('miss' does not need to be set to TRUE). 
 	
 4) Calculate errors by number of frames skipped for each variable
-	- Run the Frame Skipping Model Data Generator script again, this time calling function 'calc_frame_skip_error(model_data)'
+	- Run the Frame Skipping Error Modelling script again, this time calling function 'err_data -> calc_frame_skip_error(model_data)'
+	
+5) Plot the errors by number of frames skipped for each variable
+	- Again in the Frame Skipping Error Modelling script call the function 'plot_errors(err_data)'
