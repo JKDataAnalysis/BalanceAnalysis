@@ -1,10 +1,10 @@
 # DEV NOTES +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 # Changes since last version ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+# * Linear interpolation changed to spline fitting
 # Required for this version +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-# [BUG] When files are renamed, they disappear!
-# [BUG] Appears to be seeing file names as non-matching even when they are
 # * Move rename code to a separate function
-# * Update version notes to reflect the addition of this action
+#   - Update version notes to reflect the addition of this action
+# * Export gap parameters to file is miss = T
 # FOR NEXT VERSION ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 # * Add initialisation routines to start
 #   - Clear environment so there aren't clashes with things already in the 
@@ -124,7 +124,7 @@ run_it <- function(data_out = FALSE, miss = FALSE, check_flname = FALSE, chkskp 
           } else {
             gaps_l <- list() # empty list to add
           }
-
+          
         if (settings$interp){ # If doing calculations on interpolated data
             missn <- list_missing(CoF_data, sr)
             if(length(missn) > 0){ # If there are missing rows, interpolate them
@@ -187,7 +187,7 @@ run_it <- function(data_out = FALSE, miss = FALSE, check_flname = FALSE, chkskp 
       res_df %>%
       mutate(CoF_x_speed = CoF_x_pl / sample_t,
              CoF_y_speed = CoF_y_pl / sample_t,
-             Cof_xy_speed = CoF_xy_pl / sample_t,
+             CoF_xy_speed = CoF_xy_pl / sample_t,
              .keep = "all",
              .after = CoF_xy_pl
       )
@@ -232,15 +232,28 @@ run_it <- function(data_out = FALSE, miss = FALSE, check_flname = FALSE, chkskp 
       ttl = "Save descriptive statistics as"
       )
     }
-    # Output list of missing times collected for basing modelling of the impact of dropped frames
+    
+    ### If doing dropped frame analysis ----------------------------------------
     if (miss) {
       if (settings$interp) {
-        assign("missing_times", missn_l, envir = .GlobalEnv)
-        message(
-          "\nDetails of missing times\n\tMean = ", 
-          mean(as.numeric(missn_l) ), "\n\tSD = ", 
-          sd(as.numeric(missn_l) )
-        )
+        assign("missing_times", missn_l, envir = .GlobalEnv) # list of missing times
+        assign("gap_mean", mean(as.numeric(missn_l) ), envir = .GlobalEnv) # their mean
+        assign("gap_sd", sd(as.numeric(missn_l) ), envir = .GlobalEnv) # and SD
+        res_df %>% 
+          subset(., !Interp) %>% 
+          .[, (ncol(.) - settings$fg_max - 1):(ncol(.) - 2)] %>% # Extract frame gap columns
+          apply(., 2, sum) %>% # Sum each column
+          cumsum() %>% # Cumulative sum of
+          data.frame(cumcount = .) %>% # Convert to df
+          cbind(., fg = c(1:settings$fg_max )) %>% # Append size of frame gaps
+          .[-1, ] %>% # Remove first row (no frames missing)
+          assign("gap_counts",. ,envir = .GlobalEnv) # The cumulative count of each number of frame gaps for all data sets
+        res_df %>%
+          # Calculate number of missing frames as
+          # expected number of frames (sample rate * sample time) - actual number of frames
+          mutate(misn_frame = (sample_rate * (settings$end_t - settings$start_t) ) - No_frames , .keep = "none") %>%
+          max() %>%
+          assign("gap_max",. ,envir = .GlobalEnv) # The maximum number of missing frames
       } else {
         print("No missing times to export. These are only calculated if interp = T")
       }
@@ -461,10 +474,12 @@ interpolate <- function(x, # Data frame to work on
   x[-1:-(nrow(x) - length(missn) ), "Time"] <- missn # paste in the missing values 
   x <- x[order(x$Time), ] # Sort by Time
   
-  # Interpolate missing values
-  x <- x %>% mutate(Ax_int = zoo::na.approx(Ax) ) %>%
-    mutate(Ay_int = zoo::na.approx(Ay) )
+  # Spline interpolate missing values
+  x <- x %>% 
+    mutate(Ax_int = zoo::na.spline(Ax) ) %>%
+    mutate(Ay_int = zoo::na.spline(Ay) )
 }
+
 ## Check file names match name in header =======================================
 check_file_name <- function(source_file, skp = 4, col = 2){
   headname <- read_header_info(source_file, skp, col) # Read file name from file header
@@ -567,7 +582,7 @@ frames_skip_anal <- function(times, sample_rate, skip_max = 10){
     frame_skips_m[ , order(as.character(all_skip) )] # Sort by column name
 
   # Prefix column names with F so X isn't added when converted to df
-  names(frame_skips_m) <- paste("FG", names(frame_skips_m), sep = "")
+  names(frame_skips_m) <- paste("FG", names(frame_skips_m), sep = "") 
   
   frame_skips_m[is.na(frame_skips_m)] <- 0 # replace NA with 0
   # Append count of values exceeding max number processed
