@@ -1,17 +1,16 @@
 Procedures for running analysis of errors resulting from missing data frames
 
 1) Calculate mean and SD of missing values to build model from
-	- Run the Balance Analysis script as 'run_it(miss = TRUE)'. This will return the mean and SD of the missing times in the files analysed. These will appear above the data frame of results in the console so it may be necessary to scroll back up to view them.
-	- It will also create a global variable called 'missing_times' which can be used for further analysis
-	- For this to be representative, this should be ALL available files.
+	- Run the Balance Analysis script as 'run_it(miss = TRUE)'. This will create the following global variables;
+		* gap_counts: containing the cumulative counts of each of the sizes of frame gaps
+		* gap_mean and gap_sd: The mean and SD respectively of the missing times in the files analysed.
+		* missing_times: Which is a list of all of the times missing from the files analyses 
+	- The gap_* variables are used by the generate_model_data function in the next stage
+	- 'missing_times' is not used but included as it may be useful for further analysis
+	- For the frame gap profile to be representative, ALL available files should be included in the analysis
  
 2) Generate model data
-	- Run the Frame Skipping Error Modelling script as 'generate_model_data(gap_mean = x, gap_sd = x, gap_max = x)' replacing x with the relevant values from step 1. 'gap_max' will be the highest number of frames missing from one or more files used in step 1. This is calculated as;
-	Set number of frames - lowest number of frames recorded ('No_frames' column)
-	
-	where;
-		Set number of frames = set sample rate * set sample duration
-		
+	- Run the Frame Skipping Error Modelling script as 'generate_model_data()' 
 	- It is not necessary to select only files with no skipped frames, these will be ignored by the script.
 	
 3) Calculate parameters on model data
@@ -21,9 +20,10 @@ Procedures for running analysis of errors resulting from missing data frames
 		* Ensure that both 'unfill' and 'interp' are set to 'T'.
 	- Run the Balance Analysis script again as 'model_data <- run_it()'. This will return the results do a new data frame called 'model data'
 	- Use the files generated in step 2 ('miss' does not need to be set to TRUE). 
+	- (The results file can also be imported into a data frame as 'model_data' by copying and pasting (use clipr library))
 	
-4) Calculate errors by number of frames skipped for each variable
-	- Run the Frame Skipping Error Modelling script again, this time calling function 'err_data -> calc_frame_skip_error(model_data)'
-	
-5) Plot the errors by number of frames skipped for each variable
-	- Again in the Frame Skipping Error Modelling script call the function 'plot_errors(err_data)'
+4) Run error analysis by passing the model_data to the run_err_analysis funciton as 'run_err_analysis(model_data)'. This will perform 3 functions;
+	i) Calculate errors by number of frames skipped for each variable
+	ii) Plot the percentage errors by number of frames skipped for each variable
+		- This will generate separate plots for range (x and y), path lengths (x, y and xy) and ellipse area grouped by whether the data used are the original or with interpolation 
+	iii) Calculate linear regression model for each variable as a fucntion of the number of missing frames for interpolated and non-interpolated data. This is returned as a data frame in the global environment called 'regr'
