@@ -173,6 +173,7 @@ run_err_analysis <- function(x){
   print("Calculating regression formulae....")
   assign("regr", regr_mdl(err), envir = .GlobalEnv)
   print("Linear regression coefficients and R^2 values created as a data frame called 'rerg'")
+  View(regr)
   print(">>>>>>> Error analysis complete <<<<<<<<<")
 }
 
@@ -232,7 +233,7 @@ plot_errors <- function(df){
 
 ## Calculate Regressions =======================================================
 # See https://www.statology.org/polynomial-regression-r/
-regr <- function(x, y, i, tf){
+calc_regr <- function(x, y, i, tf){
   m <- lm(x~y -1, subset = (i == tf))
   as.data.frame(cbind(coeff = coefficients(m), r_sqr = summary(m)$r.squared))
 }
@@ -242,7 +243,7 @@ regr_mdl <- function(err){
   for (i in c(TRUE, FALSE)) {
     e <- err %>% 
       select(c(8:16)) %>% 
-      apply(., 2, regr, y = err$No_frames, i = err$Interp, tf = i) %>% 
+      apply(., 2, calc_regr, y = err$No_frames, i = err$Interp, tf = i) %>% 
       unlist() %>% 
       as.data.frame() #%>% 
     assign(paste("e", i, sep = "_"), e)

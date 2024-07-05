@@ -14,12 +14,13 @@ Procedures for running analysis of errors resulting from missing data frames
 	- It is not necessary to select only files with no skipped frames, these will be ignored by the script.
 	
 3) Calculate parameters on model data
-	- In the Analysis Specification file, change the value of;
+	- Run the Balance Analysis script again as model_data <- run_it(analspecfile = '/SettingsFiles/CustomSettings/AnalysisSpec_Error.csv'). 
+	This will use the basic the standard AquaSteps settings but with the required modifications for the model files. Specifically;
 		* 'file_spec' to 'FootscanError'
 		* 'factor_regex' to '^\w{8}'
-		* Ensure that both 'unfill' and 'interp' are set to 'T'.
-	- Run the Balance Analysis script again as 'model_data <- run_it()'. This will return the results do a new data frame called 'model data'
+		* Both 'unfill' and 'interp' are set to 'T'.
 	- Use the files generated in step 2 ('miss' does not need to be set to TRUE). 
+	- It will return the results do a new data frame called 'model data'
 	- (The results file can also be imported into a data frame as 'model_data' by copying and pasting (use clipr library))
 	
 4) Run error analysis by passing the model_data to the run_err_analysis funciton as 'run_err_analysis(model_data)'. This will perform 3 functions;

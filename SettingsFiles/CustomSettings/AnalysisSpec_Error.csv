@@ -1,4 +1,4 @@
-##### Analysis specifications (read as CSV) ####
+##### Analysis specifications (read as CSV): Compatible with script v1.6
 # Set end time to -1 to not trim
 file_spec,units_multiply,start_t,end_t,factor_regex,sk_type,fgap,unfill,interp
 FootscanError,1,0,10,^\w{8},3,T,T,T
