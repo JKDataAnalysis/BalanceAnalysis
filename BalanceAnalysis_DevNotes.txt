@@ -47,10 +47,17 @@ Version 1.5
 * Descriptive stats now written to a separate file rather than appended to the results
 * [Bug fix] If a file (results or descriptive stats) failed to save, when the user was asked whether to retry. If they clicked 'No' it still opened the file save dialogue.
 * File names deafults added to save dialogue
-* Mean and SD of all missed times can now be obtained if run_it is called with miss = TRUE. These can be used to generate missing times with a similar profile to the real data in modelling the effects of frame skipping by the Tekscan system. A global variable is also created from the list of all missing times in case more detailed profiling is required.
+* Mean, SD and maximum size of all missed times as well as a cumulative count of the missing frames can now be obtained if run_it is called with miss = TRUE. These are used to generate missing times with a similar profile to the real data in modelling the effects of frame skipping by the Tekscan system (see FrameSkippingErrorModelling script) . These are all created as global variable (see FrameSkippingErrorAnalysisHowTo.txt for details).  A list of all missing times is also created in case more detailed profiling is required.
 * [Bug fix] If only interpolated data were set to be used but there were data set with no missing values (so wouldn't be interpolated) then the descriptive statistics would still be grouped by un/interpolated, i.e. trials where there were no missing data would not be included in the statistics for the remainder of the trials.
 * If either of the default settings files cannot be read from default folder([script path]\SettingsFiles) the user will now be asked to identify a valid file. (NB settings files were previously in the root of the script folder)
-* [Bug fix] If a single file was passed, an attempt would still be made to calcualte descriptive stats and script would crash
-* A new function was added to check that the names of the data files match the file given in the file's header. This was introduced since it was observed that exporting files from Tekscan Footscan software is problematic. File names need to be set manually so when exporting from multiple files it is easy to mistake the file that is being corrected. This funciton is only called where the 'file_spec' in the AnalysisSpec file contains 'Footscan'.
-[Bug fix] If the size of the gap where frames have been dropped exceeded the max frame gap size in the Analysis SPec file ('fg_max') then the script would crash. The reported maximum size of gap also reported the number of gaps of the maximum size rather than the no of frames skipped.
-* When called as run_it(miss = T) (including missing frame analysis. All the parameters needed for frame skipping script are created as global variables. This now also includes a cumulative count of the missing frames.
+* [Bug fix] If a single file was passed, an attempt would still be made to calculate descriptive stats and script would crash
+* A new function was added to check that the names of the data files match the file given in the file's header. This was introduced since it was observed that exporting files from Tekscan Footscan software is problematic. File names need to be set manually so when exporting from multiple files it is easy to mistake the file that is being corrected. This function is only called where the 'file_spec' in the AnalysisSpec file contains 'Footscan'.
+[Bug fix] If the size of the gap where frames have been dropped exceeded the max frame gap size in the Analysis Spec file ('fg_max') then the script would crash. The reported maximum size of gap also reported the number of gaps of the maximum size rather than the no of frames skipped.
+* Linear interpolation changed to spline.
+
+Version 1.6
+* Missing frame profile data (gap_max, gap_mean, gap_sd and gap_counts) now exported as a text file as well as creating the global variables.
+* Analysis specification settings file path and name can now be passed into run_it(). This is essentially just to save having to locate it every time when doing development.
+* Modified frame gap recording to use dataframe resizing rather than having to set the max frame gap to search for a priori in settings
+* Modified settings files to reflect gap_max (maximum gap size to include) with fgap (logic- whether the include frame gap analysis). 
+    [NOTE} This makes settings files for this version, incompatible with previous versions. Copies of the v1.5 compatible default files copied to a new folder.
