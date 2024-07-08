@@ -37,6 +37,8 @@ library(ggplot2)
 library(magrittr) # used for pipes
 library(dplyr)
 
+source("/home/jon/Git/BalanceAnalysis/BalanceAnalysis_v1_6_1.R")
+
 # GENERATE MODEL DATA ==========================================================
 generate_model_data <- function(gpmean = gap_mean, gpsd = gap_sd, gpmax = gap_max, gpcounts = gap_counts, analspecfile = '/SettingsFiles/AnalysisSpec.csv'){
   # Just pull all settings in for simplicity though most of analysis setting won't be used
