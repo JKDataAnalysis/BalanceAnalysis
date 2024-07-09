@@ -1,5 +1,8 @@
 # DEV NOTES +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 # Changes since last version ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+# [Bug fix] If check_flname = T and file names not matching the information in the
+#   header are found, if the user clicked 'No' to renaming the file, the script would
+#   crash
 # Required for this version +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 # FOR NEXT VERSION ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 # * Add initialisation routines to start
@@ -550,9 +553,9 @@ check_file_name <- function(source_file, skp = 4, col = 2){
         return(newflname)
       } else {
         message("Unable to rename ", basename(file_i) )
-        return(source_file)
       }
     }
+    return(source_file)
   }
 }
 
@@ -697,3 +700,4 @@ write_to_file <- function(df, dflt = "*.csv", ttl = "Save file as", ...) {
     }
   }
 }
+
