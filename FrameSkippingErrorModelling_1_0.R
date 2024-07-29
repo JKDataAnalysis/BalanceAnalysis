@@ -29,6 +29,13 @@
 # * Plots modified to return path length, range and ellipse as separate plots
 # * Calculate regression formulae for error by number of missing frames for
 #     each variable grouped by interp == T/F
+#   - Output these as model predictions (fit & CI), and model parameters (coeff, 
+#     R^2, SEE)
+# * Regression analyses modified to include both interpolated and non-
+#       interpolated data in the model outputs
+# * Mean and median errors added to file containing the model predictions fit & 
+#     CIs
+# TO DO ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 library(readr) # read_csv
@@ -166,16 +173,33 @@ get_dir <- function(){
 
 run_err_analysis <- function(x){
   # Return error calcs and plots as global variable so available for further analysis/ mods
+  
   print("Initiatiing error calculations")
-  assign("err", calc_frame_skip_error(x), envir = .GlobalEnv) 
-  print("Error calculations created as a data frame called 'err'")
+  err <- calc_frame_skip_error(x)
+  dir_used <- # Use directory on first save as default for remainder just to save a bit of faff
+    write_to_file(err, dflt = "ErrorData.csv", ttl = "Save error data as") %>% 
+    dirname() 
+  
   print("Plotting errors....")
   plot_errors(err)
   print("Error plots created as 'plot_Range', 'plot_pl' and 'plotEllipse'")
+  
   print("Calculating regression formulae....")
-  assign("regr", regr_mdl(err), envir = .GlobalEnv)
-  print("Linear regression coefficients and R^2 values created as a data frame called 'rerg'")
-  View(regr)
+  write_to_file(as.data.frame(do_regr(err)), dflt = paste(dir_used, "ModelParameters.csv", sep = "/"), ttl = "Save model parameters as")
+  
+  print("Calculating predictions from model and average errors....")
+  cbind(
+      do_pred_vals(err), # model fit and CIs
+      cbind(
+        do_mean_median(err), # mean and medians 
+        do_n_by_nFrames(err) # number of data sets with given number of frames used for mean/ median calcs
+        ) %>% 
+        sort_by(list(.$Interp, .$No_frames)) %>%  # match mean/ median/ n sort order to predicted vals
+        select(!c("Interp", "No_frames"))  # Do not copy the grouping columns from mean, median, n (already in pred values)
+  ) %>% 
+    select(order(colnames(.))) %>%  # Do not copy the grouping columns from mean, median, n (already in pred values)
+    relocate(c(No_frames, Interp, n)) %>% # Move grouping and n columns back to start
+    write_to_file(dflt = paste(dir_used, "ModelPredictions.csv", sep = "/"), ttl = "Save model predictions as")
   print(">>>>>>> Error analysis complete <<<<<<<<<")
 }
 
@@ -187,7 +211,10 @@ calc_frame_skip_error <- function(x){
   # kludge!)
   err_df <- data.frame() # Create empty data frame
     inf_colms <- c(1:3, 5:7) # Columns with file info
-    gap_colms <- c(17:28) # Columns with frame gap data
+    gap_colms <- c(
+      which(colnames(model_data) %in% colnames(select(model_data, matches("X[[:digit:]]")))),   # Columns with frame gap data
+      which(colnames(model_data) %in% c("FrameGaps"))  # Frame gap label column
+    )
     
   # remove No frame removed count from file names, i.e. just original name
   x$file_name <- substr(x$file_name, 1, nchar(x$file_name) - 4 ) 
@@ -233,24 +260,87 @@ plot_errors <- function(df){
   }
 }
 
-## Calculate Regressions =======================================================
-# See https://www.statology.org/polynomial-regression-r/
-calc_regr <- function(x, y, i, tf){
-  m <- lm(x~y -1, subset = (i == tf))
-  as.data.frame(cbind(coeff = coefficients(m), r_sqr = summary(m)$r.squared))
+## Calculate Regression Values From Lm ==========================================
+calc_regr <- function(x, y){
+  summary(lm_xy <- lm(y ~ x -1)) %>% 
+    .$coefficients %>% 
+    as.data.frame() %>% 
+    cbind(., 
+          r_sqrd = summary(lm_xy)$r.squared, 
+          Residual_SE = summary(lm_xy)$sigma
+    ) %>% 
+    t()
+}
+
+## Do Regression Values Calcs ===================================================
+do_regr <- function(err){
+  err %>%
+    reframe(
+      across(c(16:24), calc_regr, x = No_frames, .unpack = TRUE), # Column numbers -1 since it removed .by column in count
+      .by = Interp
+      ) %>% 
+    apply(2, cbind) %>% # unpack nested df
+    cbind(Param = c("Coeff", "Std_Error", "t_value", "Pr(>|t|)", "r_sqrd", "Residual_SE"), .)  # Add No_frames as a column
+}
+
+
+## Calculate Predicted Values From Lm ==========================================
+calc_regr_pred <- function(x, y, new){
+  lm_p <- lm(y ~ x -1) %>% 
+    predict(newdata = new, interval = 'confidence') 
+}
+
+## Do Predicted Values Calcs ===================================================
+do_pred_vals <- function(err){
+  mdl_data <- data.frame(x = c(1:max(err$No_frames)))
+  err %>% 
+    reframe(
+      across(c(16:24), calc_regr_pred, x = No_frames, mdl_data, .unpack = TRUE), 
+      .by = Interp
+      ) %>% 
+    apply(2, cbind) %>% # unpack nested df
+    cbind(setNames(mdl_data, "No_frames"), .) %>%  # Add No_frames as a column
+    set_colnames(., sub("[.]{2}", "", colnames(.))) %>% # Tidy up column names
+    set_colnames(., sub("[.]1", "_LMfit", colnames(.))) %>% # relabel .[1..2 columns]
+    set_colnames(., sub("[.]2", "_LMlwr", colnames(.))) %>% # relabel .[1..2 columns]
+    set_colnames(., sub("[.]3", "_LMupr", colnames(.)))  # relabel .[1..2 columns]
 }
 
 ## Calculate Reg for all =======================================================
 regr_mdl <- function(err){
-  for (i in c(TRUE, FALSE)) {
-    e <- err %>% 
-      select(c(8:16)) %>% 
-      apply(., 2, calc_regr, y = err$No_frames, i = err$Interp, tf = i) %>% 
-      unlist() %>% 
-      as.data.frame() #%>% 
-    assign(paste("e", i, sep = "_"), e)
-  }
-  cbind(e_TRUE, e_FALSE) %>% 
-    set_colnames(c("Interp", "No_Interp"))
+  err %>% 
+    group_by(Interp) %>% 
+    summarise(mean = mean(CoF_y_pl))
+    
+    r <- sapply(err[8:16], 2, calc_regr, x = err$No_frames)
+    for (i in 1:length(r)){
+      cat("Summary of linear model regression for: ", names(r)[i], "\n", rep("-", 55), "\n", sep = "")
+      print(summary( r[[i]]) )
+    }
 }
 
+## Mean and Median errors =======================================================
+mean_med <- function(x){
+  tibble(
+    meanError = mean(x),
+    medianError = median(x)
+  )
+}    
+
+## Do Mean and Median errors ===================================================
+do_mean_median <- function(x){
+  x %>% 
+    reframe(
+      across(c(15:23), mean_med, .unpack = TRUE), 
+      .by = c(Interp, No_frames)
+    ) #%>% 
+    # sort_by(.$Interp)
+}
+
+## Do n by No frames ===========================================================
+do_n_by_nFrames <- function(x){
+  x %>% 
+    summarise(n = n(), .by = c(Interp, No_frames) ) %>%
+    # sort_by(.$Interp) %>% # Sort by Interp to match mean_median data
+    .[3] # Return only n column
+}

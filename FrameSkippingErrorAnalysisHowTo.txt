@@ -23,8 +23,9 @@ Procedures for running analysis of errors resulting from missing data frames
 	- It will return the results do a new data frame called 'model data'
 	- (The results file can also be imported into a data frame as 'model_data' by copying and pasting (use clipr library))
 	
-4) Run error analysis by passing the model_data to the run_err_analysis funciton as 'run_err_analysis(model_data)'. This will perform 3 functions;
+4) Run error analysis by passing the model_data to the run_err_analysis funciton as 'run_err_analysis(model_data)'. This will perform 4 functions;
 	i) Calculate errors by number of frames skipped for each variable
 	ii) Plot the percentage errors by number of frames skipped for each variable
 		- This will generate separate plots for range (x and y), path lengths (x, y and xy) and ellipse area grouped by whether the data used are the original or with interpolation 
-	iii) Calculate linear regression model for each variable as a fucntion of the number of missing frames for interpolated and non-interpolated data. This is returned as a data frame in the global environment called 'regr'
+	iii) Calculate linear regression model for each variable as a fucntion of the number of missing frames for interpolated data and save this to file.
+	iv) Calculate predicitons (fit and confidence intervals) from linear regression model for each variable as a fucntion of the number of missing frames for interpolated data and save this to file.
