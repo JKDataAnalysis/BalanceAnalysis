@@ -10,7 +10,7 @@ This code runs analysis on human balance data providing various parameters relat
   <li><b>Interp</b>: Whether missing values have been interpolated (see below)</li>
   <li><b>CoF_x_Range / CoF_y_Range</b>: This is simply the maximum - minimum in the Ax / Ay data</li>
   <li><b>CoF_x_pl / CoF_y_pl</b>: The total path length in the Ax / Ay data calculated as the sum of the absolute differences in consecutive points in the time-series</li>
-  <li><b>CoF_xy_pl</b>: The total path length in xy calculated as the sqaure root of the sum of the vectors between consecutive x, y pairs squared. For further detials, see;  See Prieto et al (1996) Measures of Postural Steadiness: Differences Between Healthy Young and Elderly Adults, IEEE TRANSACTIONS ON BIOMEDICAL ENGINEERING, VOL. 43, # NO. 9, SEPTEMBER 1996, 956- 966</li>
+  <li><b>CoF_xy_pl</b>: The total path length in xy calculated as the square root of the sum of the vectors between consecutive x, y pairs squared. For further detials, see;  See Prieto et al (1996) Measures of Postural Steadiness: Differences Between Healthy Young and Elderly Adults, IEEE TRANSACTIONS ON BIOMEDICAL ENGINEERING, VOL. 43, # NO. 9, SEPTEMBER 1996, 956- 966</li>
   <li><b>CoF_x_speed / CoF_y_speed / CoF_xy_speed</b>: The respective path lengths divided by sample time</li>
   <li><b>Ellipse_area</b>: 95% confidence ellipse area. For full details, see; Prieto et al (1996) Measures of Postural Steadiness: Differences Between Healthy Young and Elderly Adults, IEEE TRANSACTIONS ON BIOMEDICAL ENGINEERING, VOL. 43, # NO. 9, SEPTEMBER 1996, 956- 966</li>
 </ul>
