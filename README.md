@@ -37,7 +37,7 @@ If there are more than 1 sets of results in the returned file, the descriptive s
   <li><b>Range</b>: The difference between the maximum and mnimum of the values included</li>
   <li><b>Standard_Error</b>: standard error of included values calcualted as the standard deviaiton divided by the square root of the number of data points</li>
   <li><b>Skew</b>: the type of skewness calculations used can be set in the analysis settings file (ee SettingsFiles/AnalysisSpecDescriptor.txt for further details). Details of the different calculations can be found in the documentation of the library used: e1071</li>
-  <li>Kurtosis: the type of kurtosis calculations used can be set in the analysis settings file (ee SettingsFiles/AnalysisSpecDescriptor.txt for further details). Details of the different calculations can be found in the documentation of the library used: e1071</li>
+  <li><b>Kurtosis</b>: the type of kurtosis calculations used can be set in the analysis settings file (ee SettingsFiles/AnalysisSpecDescriptor.txt for further details). Details of the different calculations can be found in the documentation of the library used: e1071</li>
 </ul>
 <h2>Data file compatibility</h2>
 The required specifications to use text files exported with data from the Kistler Bioware software or the Tekscan Fscan research software (SAM) are included in the default DataFileSpec.csv. It would also be possible to use any other deliminated text file that also contain:
