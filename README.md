@@ -55,7 +55,7 @@ The main function is called as 'run_it()'. Passing the following values as TRUE 
   <i>analspecfile</i>: the path and names of the analysis specification settings files with respect to the script path. By default this is '<i>/SettingsFiles/AnalysisSpec.csv</i>'.
   
 </ul>
-<h3>Dependencis</h3>
+<h3>Dependencies</h3>
 <ul>
   <li>R version 4+</li>
 </ul>
